@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skenovanie materiálu</title>
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+
+<style>
+body { font-family: Arial; padding: 20px; }
+input, button { width: 100%; padding: 15px; margin-top: 10px; font-size: 18px; }
+video { width: 100%; margin-top: 20px; }
+</style>
+</head>
+
+<body>
+
+<h2>Skenovanie materiálu</h2>
+
+<label>Materiál:</label>
+<input id="material" readonly>
+
+<button onclick="scan('material')">Skenovať Materiál</button>
+
+<label>Materiálové číslo:</label>
+<input id="materialNumber" readonly>
+
+<button onclick="scan('materialNumber')">Skenovať Materiálové číslo</button>
+
+<button onclick="save()">Uložiť</button>
+
+<video id="video"></video>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbx5s0si3Mnm0sQvAGp93Nr_x4yNVfAj5AY2dewMLHemCjMnBKv_wpwq8JFaiD5SO1EOUQ/exec";
+
+async function scan(field) {
+    const codeReader = new ZXing.BrowserBarcodeReader();
+    try {
+        const result = await codeReader.decodeOnceFromVideoDevice(undefined, 'video');
+        document.getElementById(field).value = result.text;
+    } catch (e) {
+        alert("Nepodarilo sa načítať kód");
+    }
+}
+
+function save() {
+    const data = {
+        material: document.getElementById("material").value,
+        materialNumber: document.getElementById("materialNumber").value,
+        timestamp: new Date().toLocaleString("sk-SK")
+    };
+
+    fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify(data)
+    }).then(() => {
+        alert("Úspešne uložené");
+        document.getElementById("material").value = "";
+        document.getElementById("materialNumber").value = "";
+    });
+}
+</script>
+
+</body>
+</html>
