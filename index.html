@@ -11,29 +11,49 @@ body {
     padding: 20px; 
     background: #f5f5f5;
 }
+
 h2 {
     text-align: center;
+    margin-bottom: 10px;
 }
-input, button { 
+
+video { 
     width: 100%; 
-    padding: 15px; 
-    margin-top: 10px; 
-    font-size: 18px; 
+    height: 300px; /* stredná kamera */
+    background: #000;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    object-fit: cover;
+}
+
+input {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+    margin-top: 10px;
+    border: 2px solid #ccc;
+    border-radius: 6px;
     box-sizing: border-box;
 }
+
+input.active {
+    border: 3px solid #007bff; /* modrý rámček */
+    background: #eef5ff;
+}
+
 button {
+    width: 100%;
+    padding: 15px;
+    margin-top: 20px;
+    font-size: 20px;
     background: #007bff;
     color: white;
     border: none;
     border-radius: 6px;
 }
+
 button:active {
     background: #0056b3;
-}
-video { 
-    width: 100%; 
-    margin-top: 20px; 
-    border-radius: 6px;
 }
 </style>
 </head>
@@ -42,40 +62,63 @@ video {
 
 <h2>Skenovanie materiálu</h2>
 
-<label>Materiál:</label>
-<input id="material" readonly>
-
-<button onclick="scan('material')">Skenovať Materiál</button>
-
-<label>Materiálové číslo:</label>
-<input id="materialNumber" readonly>
-
-<button onclick="scan('materialNumber')">Skenovať Materiálové číslo</button>
-
-<button onclick="save()">Uložiť</button>
-
+<!-- Kamera hore -->
 <video id="video"></video>
 
+<!-- Polia -->
+<label>Materiál:</label>
+<input id="material">
+
+<label>Materiálové číslo:</label>
+<input id="materialNumber">
+
+<!-- Jedno tlačidlo skenovania -->
+<button onclick="scan()">Skenovať</button>
+
+<!-- Uložiť -->
+<button onclick="save()">Uložiť</button>
+
 <script>
-// SEM VLOŽ PRESNÚ WEB APP URL S /exec
+// API URL
 const API_URL = "https://script.google.com/macros/s/AKfycbwkRJ1h1ExlS6izN5BnDazCRHJ0XkUPV0sryQOMtQO829bp5CVg5-uIVLnAVtHNgzFRNQ/exec";
 
-async function scan(field) {
-    const codeReader = new ZXing.BrowserBarcodeReader();
+// Aktívne pole
+let activeField = null;
+
+// Kliknutím označíš pole
+document.querySelectorAll("input").forEach(input => {
+    input.addEventListener("focus", () => {
+        document.querySelectorAll("input").forEach(i => i.classList.remove("active"));
+        input.classList.add("active");
+        activeField = input.id;
+    });
+});
+
+// Presnejší skener
+const codeReader = new ZXing.BrowserMultiFormatReader();
+
+// Skenovanie do aktívneho poľa
+async function scan() {
+    if (!activeField) {
+        alert("Najprv klikni na pole, do ktorého chceš skenovať.");
+        return;
+    }
+
     try {
         const result = await codeReader.decodeOnceFromVideoDevice(undefined, 'video');
-        document.getElementById(field).value = result.text;
+        document.getElementById(activeField).value = result.text;
     } catch (e) {
         alert("Nepodarilo sa načítať kód");
     }
 }
 
+// Uloženie
 function save() {
     const material = document.getElementById("material").value;
     const materialNumber = document.getElementById("materialNumber").value;
 
     if (!material || !materialNumber) {
-        alert("Najprv naskenuj oba kódy");
+        alert("Najprv vyplň oba údaje.");
         return;
     }
 
@@ -89,22 +132,16 @@ function save() {
         method: "POST",
         mode: "no-cors",
         body: JSON.stringify(data),
-        headers: {
-            "Content-Type": "application/json"
-        }
+        headers: { "Content-Type": "application/json" }
     })
     .then(() => {
-        // pri no-cors nevieme prečítať odpoveď, ale požiadavka odíde
-        alert("Úspešne odoslané, skontroluj tabuľku");
+        alert("Úspešne odoslané");
         document.getElementById("material").value = "";
         document.getElementById("materialNumber").value = "";
     })
-    .catch(err => {
-        alert("Chyba komunikácie: " + err);
-    });
+    .catch(err => alert("Chyba komunikácie: " + err));
 }
 </script>
 
 </body>
 </html>
-
