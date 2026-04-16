@@ -17,7 +17,6 @@ h2 {
     margin-bottom: 10px;
 }
 
-/* Kamera */
 .video-container {
     position: relative;
     width: 100%;
@@ -33,7 +32,6 @@ video {
     object-fit: cover;
 }
 
-/* Rámček */
 .scan-box {
     position: absolute;
     top: 50%;
@@ -57,7 +55,6 @@ video {
     100% { box-shadow: 0 0 10px #00ff00; }
 }
 
-/* Polia */
 input {
     width: 100%;
     padding: 15px;
@@ -73,7 +70,6 @@ input.active {
     background: #eef5ff;
 }
 
-/* Tlačidlá */
 button {
     width: 100%;
     padding: 15px;
@@ -95,37 +91,33 @@ button:active {
 
 <h2>Skenovanie materiálu</h2>
 
-<!-- Kamera hore -->
 <div class="video-container">
     <video id="video"></video>
     <div id="scanBox" class="scan-box ready"></div>
 </div>
 
-<!-- Tlačidlá -->
 <button onclick="scan()">Skenovať</button>
 <button onclick="captureReceipt()" style="background:#28a745;">Odfotiť príjemku</button>
 
-<!-- Polia -->
 <label>Materiál:</label>
 <input id="material">
 
 <label>Materiálové číslo:</label>
 <input id="materialNumber">
 
-<!-- Uložiť -->
 <button onclick="save()">Uložiť</button>
 
 <script>
-// OCR endpoint
-const OCR_URL = "https://script.google.com/macros/s/AKfycbwSn4OMT44iXanJ2gGWPKbvnrPLZ2FLJTGqD9D9GIyn1HmfABMCUh_NeJnCyt8a5P2MVQ/exec";
+/* OCR endpoint */
+const OCR_URL = "https://script.google.com/macros/s/AKfycbwSmEagPU5FOsEajPLS01j91-ALNfyIcwaJe2cHPzGLf5AJWNTcJ_sdE0W4DSsPa2xxlA/exec";
 
-// Zapisovací endpoint
+/* Zapisovací endpoint */
 const SAVE_URL = "https://script.google.com/macros/s/AKfycbwkRJ1h1ExlS6izN5BnDazCRHJ0XkUPV0sryQOMtQO829bp5CVg5-uIVLnAVtHNgzFRNQ/exec";
 
-// Aktívne pole
+/* Aktívne pole */
 let activeField = null;
 
-// Kliknutím označíš pole
+/* Kliknutím označíš pole */
 document.querySelectorAll("input").forEach(input => {
     input.addEventListener("focus", () => {
         document.querySelectorAll("input").forEach(i => i.classList.remove("active"));
@@ -134,10 +126,10 @@ document.querySelectorAll("input").forEach(input => {
     });
 });
 
-// Presnejší skener
+/* Presnejší skener */
 const codeReader = new ZXing.BrowserMultiFormatReader();
 
-// Skenovanie do aktívneho poľa
+/* Skenovanie do aktívneho poľa */
 async function scan() {
     if (!activeField) {
         alert("Najprv klikni na pole, do ktorého chceš skenovať.");
@@ -161,7 +153,7 @@ async function scan() {
     }
 }
 
-// AI FOTENIE PRÍJEMKY
+/* AI FOTENIE PRÍJEMKY */
 async function captureReceipt() {
     const input = document.createElement("input");
     input.type = "file";
@@ -174,21 +166,27 @@ async function captureReceipt() {
 
         const base64 = await fileToBase64(file);
 
-        const response = await fetch(OCR_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ imageBase64: base64 })
-        });
+        try {
+            const response = await fetch(OCR_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ imageBase64: base64 })
+            });
 
-        const result = await response.json();
+            const result = await response.json();
 
-        document.getElementById("materialNumber").value = result.materialNumber || "";
-        document.getElementById("material").value = result.material || "";
+            document.getElementById("materialNumber").value = result.materialNumber || "";
+            document.getElementById("material").value = result.material || "";
+
+        } catch (err) {
+            alert("Chyba OCR komunikácie: " + err);
+        }
     };
 
     input.click();
 }
 
+/* Konverzia fotky na Base64 */
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -198,7 +196,7 @@ function fileToBase64(file) {
     });
 }
 
-// Uloženie
+/* Uloženie do tabuľky */
 function save() {
     const material = document.getElementById("material").value;
     const materialNumber = document.getElementById("materialNumber").value;
