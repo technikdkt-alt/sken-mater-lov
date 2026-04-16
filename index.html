@@ -17,15 +17,48 @@ h2 {
     margin-bottom: 10px;
 }
 
+/* Kamera */
+.video-container {
+    position: relative;
+    width: 100%;
+    height: 250px; /* menšia kamera */
+    margin-bottom: 15px;
+}
+
 video { 
     width: 100%; 
-    height: 300px; /* stredná kamera */
+    height: 100%;
     background: #000;
     border-radius: 8px;
-    margin-bottom: 20px;
     object-fit: cover;
 }
 
+/* Rámček na mierenie */
+.scan-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60%;
+    height: 40%;
+    transform: translate(-50%, -50%);
+    border: 3px solid #00ff00;
+    border-radius: 8px;
+    box-shadow: 0 0 10px #00ff00;
+    pointer-events: none;
+}
+
+/* Vizuálne potvrdenie pripravenosti */
+.ready {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% { box-shadow: 0 0 10px #00ff00; }
+    50% { box-shadow: 0 0 20px #00ff00; }
+    100% { box-shadow: 0 0 10px #00ff00; }
+}
+
+/* Polia */
 input {
     width: 100%;
     padding: 15px;
@@ -37,14 +70,15 @@ input {
 }
 
 input.active {
-    border: 3px solid #007bff; /* modrý rámček */
+    border: 3px solid #007bff;
     background: #eef5ff;
 }
 
+/* Tlačidlá */
 button {
     width: 100%;
     padding: 15px;
-    margin-top: 20px;
+    margin-top: 15px;
     font-size: 20px;
     background: #007bff;
     color: white;
@@ -63,7 +97,13 @@ button:active {
 <h2>Skenovanie materiálu</h2>
 
 <!-- Kamera hore -->
-<video id="video"></video>
+<div class="video-container">
+    <video id="video"></video>
+    <div id="scanBox" class="scan-box ready"></div>
+</div>
+
+<!-- Jedno tlačidlo skenovania -->
+<button onclick="scan()">Skenovať</button>
 
 <!-- Polia -->
 <label>Materiál:</label>
@@ -71,9 +111,6 @@ button:active {
 
 <label>Materiálové číslo:</label>
 <input id="materialNumber">
-
-<!-- Jedno tlačidlo skenovania -->
-<button onclick="scan()">Skenovať</button>
 
 <!-- Uložiť -->
 <button onclick="save()">Uložiť</button>
@@ -107,6 +144,16 @@ async function scan() {
     try {
         const result = await codeReader.decodeOnceFromVideoDevice(undefined, 'video');
         document.getElementById(activeField).value = result.text;
+
+        // krátke zelené potvrdenie
+        const box = document.getElementById("scanBox");
+        box.style.borderColor = "#00ff00";
+        box.style.boxShadow = "0 0 20px #00ff00";
+        setTimeout(() => {
+            box.style.borderColor = "#00ff00";
+            box.style.boxShadow = "0 0 10px #00ff00";
+        }, 300);
+
     } catch (e) {
         alert("Nepodarilo sa načítať kód");
     }
