@@ -116,8 +116,11 @@ button:active {
 <button onclick="save()">Uložiť</button>
 
 <script>
-// API URL
-const API_URL = "https://script.google.com/macros/s/AKfycbwSmEagPU5FOsEajPLS01j91-ALNfyIcwaJe2cHPzGLf5AJWNTcJ_sdE0W4DSsPa2xxlA/exec";
+// OCR endpoint
+const OCR_URL = "https://script.google.com/macros/s/AKfycbwSmEagPU5FOsEajPLS01j91-ALNfyIcwaJe2cHPzGLf5AJWNTcJ_sdE0W4DSsPa2xxlA/exec";
+
+// Zapisovací endpoint
+const SAVE_URL = "https://script.google.com/macros/s/AKfycbwkRJ1h1ExlS6izN5BnDazCRHJ0XkUPV0sryQOMtQO829bp5CVg5-uIVLnAVtHNgzFRNQ/exec";
 
 // Aktívne pole
 let activeField = null;
@@ -161,70 +164,4 @@ async function scan() {
 // AI FOTENIE PRÍJEMKY
 async function captureReceipt() {
     const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.capture = "environment";
-
-    input.onchange = async () => {
-        const file = input.files[0];
-        if (!file) return;
-
-        const base64 = await fileToBase64(file);
-
-        const response = await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ imageBase64: base64 })
-        });
-
-        const result = await response.json();
-
-        document.getElementById("materialNumber").value = result.materialNumber;
-        document.getElementById("material").value = result.material;
-    };
-
-    input.click();
-}
-
-function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(",")[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-}
-
-// Uloženie
-function save() {
-    const material = document.getElementById("material").value;
-    const materialNumber = document.getElementById("materialNumber").value;
-
-    if (!material || !materialNumber) {
-        alert("Najprv vyplň oba údaje.");
-        return;
-    }
-
-    const data = {
-        material: material,
-        materialNumber: materialNumber,
-        timestamp: new Date().toLocaleString("sk-SK")
-    };
-
-    fetch(API_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" }
-    })
-    .then(() => {
-        alert("Úspešne odoslané");
-        document.getElementById("material").value = "";
-        document.getElementById("materialNumber").value = "";
-    })
-    .catch(err => alert("Chyba komunikácie: " + err));
-}
-</script>
-
-</body>
-</html>
+    input.type =
