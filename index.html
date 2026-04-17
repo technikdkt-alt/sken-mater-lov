@@ -113,6 +113,7 @@ const OCR_URL = "https://script.google.com/macros/s/AKfycbxSjpanzgAflb4Wzej0i6vx
 
 /* Zapisovací endpoint */
 const SAVE_URL = "https://script.google.com/macros/s/AKfycbwkRJ1h1ExlS6izN5BnDazCRHJ0XkUPV0sryQOMtQO829bp5CVg5-uIVLnAVtHNgzFRNQ/exec";
+
 /* Aktívne pole */
 let activeField = null;
 
@@ -166,19 +167,36 @@ async function captureReceipt() {
         const base64 = await fileToBase64(file);
 
         try {
+            console.log("Posielam obrázok...");
+            
             const response = await fetch(OCR_URL, {
                 method: "POST",
+                mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ imageBase64: base64 })
             });
 
-            const result = await response.json();
+            console.log("Response status:", response.status);
+            console.log("Response type:", response.type);
+            
+            const text = await response.text();
+            console.log("Raw response:", text);
+            
+            const result = JSON.parse(text);
+            
+            if (result.error) {
+                alert("Chyba OCR: " + result.error);
+                return;
+            }
 
             document.getElementById("materialNumber").value = result.materialNumber || "";
             document.getElementById("material").value = result.material || "";
+            
+            alert("✅ Úspešne načítané!");
 
         } catch (err) {
-            alert("Chyba OCR komunikácie: " + err);
+            console.error("Chyba:", err);
+            alert("Chyba OCR komunikácie: " + err.message);
         }
     };
 
