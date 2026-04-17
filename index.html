@@ -109,7 +109,7 @@ button:active {
 
 <script>
 /* OCR endpoint */
-const OCR_URL = "https://script.google.com/macros/s/AKfycbxSjpanzgAflb4Wzej0i6vxlJOr5VqJ3k0mJ0c5qZPj9lvWSfuETXxSZg4JuEZE2QMiZg/exec";
+const OCR_URL = "https://script.google.com/macros/s/AKfycbwJQSNshqRF0shzOYW0H0McyMuaOXoZFiI3fgGQf-2OESNt6DSCnTObmjcAcZ6lTEZowg/exec";
 
 /* Zapisovací endpoint */
 const SAVE_URL = "https://script.google.com/macros/s/AKfycbwkRJ1h1ExlS6izN5BnDazCRHJ0XkUPV0sryQOMtQO829bp5CVg5-uIVLnAVtHNgzFRNQ/exec";
@@ -171,18 +171,18 @@ async function captureReceipt() {
             
             const response = await fetch(OCR_URL, {
                 method: "POST",
-                mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ imageBase64: base64 })
             });
 
-            console.log("Response status:", response.status);
-            console.log("Response type:", response.type);
+            console.log("Response:", response);
             
-            const text = await response.text();
-            console.log("Raw response:", text);
-            
-            const result = JSON.parse(text);
+            if (!response.ok) {
+                throw new Error("HTTP error! status: " + response.status);
+            }
+
+            const result = await response.json();
+            console.log("Result:", result);
             
             if (result.error) {
                 alert("Chyba OCR: " + result.error);
