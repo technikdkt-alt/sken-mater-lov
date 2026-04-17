@@ -4,6 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Skenovanie materiálu</title>
 <script src="https://unpkg.com/@zxing/library@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5"></script>
 
 <style>
 body { 
@@ -84,6 +85,13 @@ button {
 button:active {
     background: #0056b3;
 }
+
+.loading {
+    text-align: center;
+    margin: 20px 0;
+    font-weight: bold;
+    color: #007bff;
+}
 </style>
 </head>
 
@@ -107,10 +115,9 @@ button:active {
 
 <button onclick="save()">Uložiť</button>
 
-<script>
-/* OCR endpoint */
-const OCR_URL = "https://script.google.com/macros/s/AKfycbwem1LNe6juVwG_QuDoFZw9zeC9sXcRVzewSprAQ5iSTwbb7o5nu8AcqMd6YI-LJ4kRHg/exec";
+<div id="loading" class="loading" style="display:none;">Spracúvam obrázok...</div>
 
+<script>
 /* Zapisovací endpoint */
 const SAVE_URL = "https://script.google.com/macros/s/AKfycbwkRJ1h1ExlS6izN5BnDazCRHJ0XkUPV0sryQOMtQO829bp5CVg5-uIVLnAVtHNgzFRNQ/exec";
 
@@ -153,7 +160,7 @@ async function scan() {
     }
 }
 
-/* AI FOTENIE PRÍJEMKY */
+/* AI FOTENIE PRÍJEMKY - TESSERACT.JS */
 async function captureReceipt() {
     const input = document.createElement("input");
     input.type = "file";
@@ -164,41 +171,43 @@ async function captureReceipt() {
         const file = input.files[0];
         if (!file) return;
 
-        alert("Spracúvam obrázok... Prosím čakaj.");
-
-        const base64 = await fileToBase64(file);
+        document.getElementById("loading").style.display = "block";
 
         try {
-            console.log("Posielam obrázok...");
+            console.log("Spracúvam obrázok s Tesseract.js...");
             
-            // Skúsime s FormData
-            const formData = new FormData();
-            formData.append("imageBase64", base64);
-            
-            const response = await fetch(OCR_URL, {
-                method: "POST",
-                body: formData
-            });
+            const result = await Tesseract.recognize(
+                file,
+                'slk', // Slovak language
+                { logger: m => console.log(m) }
+            );
 
-            console.log("Response status:", response.status);
-            const text = await response.text();
-            console.log("Raw response:", text);
+            const text = result.data.text;
+            console.log("OCR text:", text);
             
-            const result = JSON.parse(text);
-            
-            if (result.error) {
-                alert("❌ Chyba OCR: " + result.error);
+            if (!text || text.trim().length === 0) {
+                alert("❌ OCR nerozpoznalo žiadny text");
+                document.getElementById("loading").style.display = "none";
                 return;
             }
 
-            document.getElementById("materialNumber").value = result.materialNumber || "";
-            document.getElementById("material").value = result.material || "";
+            // Hľadaj čísla
+            const materialNumberMatch = text.match(/\b\d{14,16}\b/);
+            const materialNumber = materialNumberMatch ? materialNumberMatch[0] : "";
+
+            const materialMatches = text.match(/\b\d{10,12}\b/g);
+            const material = materialMatches ? materialMatches[materialMatches.length - 1] : "";
+
+            document.getElementById("materialNumber").value = materialNumber || "";
+            document.getElementById("material").value = material || "";
             
-            alert("✅ Úspešne načítané!\nMateriál: " + result.material + "\nČíslo: " + result.materialNumber);
+            alert("✅ Úspešne načítané!\nMateriál: " + (material || "Nenájdené") + "\nČíslo: " + (materialNumber || "Nenájdené"));
 
         } catch (err) {
             console.error("Chyba:", err);
-            alert("❌ Chyba: " + err.message);
+            alert("❌ Chyba pri spracovaní: " + err.message);
+        } finally {
+            document.getElementById("loading").style.display = "none";
         }
     };
 
