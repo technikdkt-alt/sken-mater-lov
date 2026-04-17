@@ -130,6 +130,7 @@ document.querySelectorAll("input").forEach(input => {
         document.querySelectorAll("input").forEach(i => i.classList.remove("active"));
         input.classList.add("active");
         activeField = input.id;
+        input.blur(); // Zatvori klavesnicu
     });
 });
 
